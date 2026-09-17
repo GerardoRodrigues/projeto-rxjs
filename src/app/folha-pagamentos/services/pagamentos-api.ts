@@ -65,7 +65,7 @@ export class PagamentosApi {
 
         if (id === 2) {
           throw {
-            message: 'Erro ao processar pagamento',
+            message: `Erro ao processar pagamento de ${nome}`,
             funcionario: {
               id,
               nome,

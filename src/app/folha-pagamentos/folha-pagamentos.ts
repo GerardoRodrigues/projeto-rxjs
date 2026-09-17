@@ -1,5 +1,6 @@
-import { Component, computed, signal } from '@angular/core';
-import { IFuncionario } from './services/pagamentos-api';
+import { Component, computed, inject, signal } from '@angular/core';
+import { IFuncionario, PagamentosApi } from './services/pagamentos-api';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-folha-pagamentos',
@@ -8,32 +9,41 @@ import { IFuncionario } from './services/pagamentos-api';
   styleUrl: './folha-pagamentos.css',
 })
 export class FolhaPagamentos {
-  funcionarios = signal<IFuncionario[]>([]);
+  private readonly _pagamentosApi = inject(PagamentosApi);
 
   consoleLogs = signal<string[]>(['Sistema pronto para iniciar.']);
   processando = signal(false);
 
-  funcionariosSelecionados = computed(() =>
-    this.funcionarios().filter(f => f.selecionado)
-  );
+  funcionariosResource = rxResource({
+    params: () => true,
+    stream: () => this._pagamentosApi.getFuncionarios(),
+  });
 
-  toggleSelecao(id: number) {
+  funcionarios = computed(() => {
+    const HAS_ERRO = !!this.funcionariosResource.error();
 
-  }
+    if (HAS_ERRO || !this.funcionariosResource.hasValue()) {
+      return [];
+    }
 
-  iniciarPagamentos() {
+    return this.funcionariosResource.value() ?? [];
+  });
 
-  }
+  funcionariosSelecionados = computed(() => {
+    if (this.funcionariosResource.hasValue()) {
+      return this.funcionariosResource.value().filter((funcionario) => funcionario.selecionado);
+    }
 
-  private atualizarStatus(id: number, novoStatus: IFuncionario['status']) {
+    return [];
+  });
 
-  }
+  toggleSelecao(id: number) {}
 
-  private addLog(msg: string) {
+  iniciarPagamentos() {}
 
-  }
+  private atualizarStatus(id: number, novoStatus: IFuncionario['status']) {}
 
-  private resetarStatus() {
+  private addLog(msg: string) {}
 
-  }
+  private resetarStatus() {}
 }
