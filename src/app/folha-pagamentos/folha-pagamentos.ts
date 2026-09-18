@@ -1,6 +1,7 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { IFuncionario, PagamentosApi } from './services/pagamentos-api';
+import { IFuncionario, IPagamentoResponse, PagamentosApi } from './services/pagamentos-api';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { catchError, concatMap, EMPTY, finalize, from, of, tap } from 'rxjs';
 
 export interface IMessageLogs {
   message: string;
@@ -20,12 +21,6 @@ export class FolhaPagamentos {
     { message: 'Sistema pronto para iniciar.', status: 'success' },
   ]);
   processando = signal(false);
-
-  ngOnInit() {
-    this.addLog({ message: 'Carregando funcionários...', status: 'success' });
-    this.addLog({ message: 'Sistema pronto para iniciar.', status: 'error' });
-    this.addLog({ message: 'Sistema pronto para iniciar.', status: 'loading' });
-  }
 
   funcionariosResource = rxResource({
     params: () => true,
@@ -78,13 +73,73 @@ export class FolhaPagamentos {
     });
   }
 
-  iniciarPagamentos() {}
+  iniciarPagamentos() {
+    this.consoleLogs.set([{ message: 'Iniciando processamento...', status: 'loading' }]);
+    this.resetarStatus();
+    this.processando.set(true);
 
-  private atualizarStatus(id: number, novoStatus: IFuncionario['status']) {}
+    if (this.funcionariosSelecionados().length === 0) {
+      this.addLog({ message: 'Nenhum funcionário selecionado.', status: 'loading' });
+      this.processando.set(false);
+      return;
+    }
+
+    from(this.funcionariosSelecionados())
+      .pipe(
+        concatMap((funcionario) => {
+          this.atualizarStatus(funcionario.id, 'processando');
+          this.addLog({ message: `Pagando ${funcionario.nome}`, status: 'loading' });
+
+          return this._pagamentosApi.pagarFuncionario(funcionario).pipe(
+            tap(() => {
+              this.atualizarStatus(funcionario.id, 'pago');
+              this.addLog({
+                message: `Pagamento realizado com sucesso para ${funcionario.nome}`,
+                status: 'success',
+              });
+            }),
+            catchError((error: IPagamentoResponse) => {
+              this.atualizarStatus(funcionario.id, 'erro');
+              this.addLog({
+                message: `Erro ao pagar ${funcionario.nome}: ${error.mensagem}`,
+                status: 'error',
+              });
+              return EMPTY;
+            }),
+          );
+        }),
+        finalize(() => {
+          this.addLog({ message: 'Processamento concluído.', status: 'success' });
+          this.processando.set(false);
+        }),
+      )
+      .subscribe();
+  }
+
+  private atualizarStatus(id: number, novoStatus: IFuncionario['status']) {
+    this.funcionarios.update((funcionarios) => {
+      return funcionarios.map((f) => {
+        if (f.id === id) {
+          return {
+            ...f,
+            status: novoStatus,
+          };
+        }
+        return f;
+      });
+    });
+  }
 
   private addLog(msg: IMessageLogs) {
     this.consoleLogs.update((logs) => [...logs, msg]);
   }
 
-  private resetarStatus() {}
+  private resetarStatus() {
+    this.funcionarios.update((funcionarios) => {
+      return funcionarios.map((f) => ({
+        ...f,
+        status: 'pendente',
+      }));
+    });
+  }
 }

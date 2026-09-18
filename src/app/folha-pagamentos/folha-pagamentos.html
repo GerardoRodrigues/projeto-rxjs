@@ -75,7 +75,7 @@
     <button
       (click)="iniciarPagamentos()"
       [disabled]="processando()"
-      class="mt-6 w-full py-3 px-6 text-lg font-semibold text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed disabled:shadow-none"
+      class="mt-6 w-full py-3 px-6 text-lg font-semibold text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed disabled:shadow-none cursor-pointer"
     >
       {{ processando() ? 'Processando Lote...' : 'Processar Pagamentos' }}
     </button>

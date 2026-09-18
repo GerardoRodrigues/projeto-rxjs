@@ -82,22 +82,30 @@ export class PagamentosApi {
       },
     };
 
+    const simulacaoError = new HttpErrorResponse({
+      error: {
+        mensagem: 'Conta bloqueada.',
+        codigoInterno: 'ERR_FUNC_400',
+      },
+      status: 400,
+      statusText: 'Bad Request',
+    });
+
     return of(responseSucesso).pipe(
       delay(tempoAleatorio),
       map((pagamentoResponse) => {
-        const { id, nome } = pagamentoResponse.funcionario;
-
-        if (id === 2) {
-          throw {
-            message: `Erro ao processar pagamento de ${nome}`,
-            funcionario: {
-              id,
-              nome,
-            },
-          };
+        if (pagamentoResponse.funcionario.id === 2) {
+          throw simulacaoError;
         }
+        return pagamentoResponse;
+      }),
+      catchError((error: HttpErrorResponse) => {
+        const mensagemErro: IPagamentoResponse = {
+          mensagem: error.status === 400 ? error.error.mensagem : 'Ocorreu um erro inesperado',
+          funcionario,
+        };
 
-        return responseSucesso;
+        return throwError(() => mensagemErro);
       }),
     );
   }
