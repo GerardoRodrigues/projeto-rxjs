@@ -29,6 +29,16 @@ export class FolhaPagamentos {
     return this.funcionariosResource.value() ?? [];
   });
 
+  mensagemErroGetFuncionarios = computed(() => {
+    const HAS_ERRO = this.funcionariosResource.error();
+
+    if (HAS_ERRO && HAS_ERRO.cause) {
+      return HAS_ERRO.cause;
+    }
+
+    return 'Erro inesperado ao carregar funcionários.';
+  });
+
   funcionariosSelecionados = computed(() => {
     if (this.funcionariosResource.hasValue()) {
       return this.funcionariosResource.value().filter((funcionario) => funcionario.selecionado);

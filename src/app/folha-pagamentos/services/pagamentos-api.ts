@@ -1,5 +1,6 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { concatMap, delay, map, Observable, of, throwError } from 'rxjs';
+import { catchError, concatMap, delay, map, Observable, of, throwError } from 'rxjs';
 
 export interface IFuncionario {
   id: number;
@@ -49,9 +50,23 @@ export class PagamentosApi {
         ),
       );
     } else {
+      const simulacaoHttpError = new HttpErrorResponse({
+        error: {
+          mensagem: 'Ocorreu um erro sistêmico ao buscar os funcionários',
+          codigoInterno: 'ERR_FUNC_500',
+        },
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
       return of(true).pipe(
         delay(2000),
-        concatMap(() => throwError(() => new Error('Erro ao buscar funcionários'))),
+        concatMap(() => throwError(() => simulacaoHttpError)),
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 500) {
+            return throwError(() => error.error.mensagem);
+          }
+          return throwError(() => 'Ocorreu um erro ao buscar os funcionários');
+        }),
       );
     }
   }
