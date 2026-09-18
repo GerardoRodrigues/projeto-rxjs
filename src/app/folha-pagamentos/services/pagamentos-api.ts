@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { delay, map, Observable, of } from 'rxjs';
+import { concatMap, delay, map, Observable, of, throwError } from 'rxjs';
 
 export interface IFuncionario {
   id: number;
@@ -17,39 +17,48 @@ export interface IPagamentoResponse {
   providedIn: 'root',
 })
 export class PagamentosApi {
-  private readonly tempoAleatorio = Math.floor(Math.random() * 4000) + 1000;
-
   getFuncionarios(): Observable<IFuncionario[]> {
-    return of([
-      {
-        id: 0,
-        nome: 'João Pedro',
-      },
-      {
-        id: 1,
-        nome: 'Maria Silva',
-      },
-      {
-        id: 2,
-        nome: 'Pedro Almeida',
-      },
-      {
-        id: 3,
-        nome: 'Ana Oliveira',
-      },
-    ]).pipe(
-      delay(this.tempoAleatorio),
-      map((funcionarios) =>
-        funcionarios.map((funcionario) => ({
-          ...funcionario,
-          selecionado: true,
-          status: 'pendente',
-        })),
-      ),
-    );
+    const tempoAleatorio = Math.floor(Math.random() * 4000) + 1000;
+
+    if (tempoAleatorio < 4000) {
+      return of([
+        {
+          id: 0,
+          nome: 'João Pedro',
+        },
+        {
+          id: 1,
+          nome: 'Maria Silva',
+        },
+        {
+          id: 2,
+          nome: 'Pedro Almeida',
+        },
+        {
+          id: 3,
+          nome: 'Ana Oliveira',
+        },
+      ]).pipe(
+        delay(tempoAleatorio),
+        map((funcionarios) =>
+          funcionarios.map((funcionario) => ({
+            ...funcionario,
+            selecionado: true,
+            status: 'pendente',
+          })),
+        ),
+      );
+    } else {
+      return of(true).pipe(
+        delay(2000),
+        concatMap(() => throwError(() => new Error('Erro ao buscar funcionários'))),
+      );
+    }
   }
 
   pagarFuncionario(funcionario: IFuncionario) {
+    const tempoAleatorio = Math.floor(Math.random() * 4000) + 1000;
+
     const responseSucesso: IPagamentoResponse = {
       mensagem: 'Pagamento realizado com sucesso',
       funcionario: {
@@ -59,7 +68,7 @@ export class PagamentosApi {
     };
 
     return of(responseSucesso).pipe(
-      delay(this.tempoAleatorio),
+      delay(tempoAleatorio),
       map((pagamentoResponse) => {
         const { id, nome } = pagamentoResponse.funcionario;
 

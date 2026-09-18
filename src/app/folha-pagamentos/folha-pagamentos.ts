@@ -37,6 +37,10 @@ export class FolhaPagamentos {
     return [];
   });
 
+  recarregarFuncionarios() {
+    this.funcionariosResource.reload();
+  }
+
   toggleSelecao(id: number) {}
 
   iniciarPagamentos() {}
