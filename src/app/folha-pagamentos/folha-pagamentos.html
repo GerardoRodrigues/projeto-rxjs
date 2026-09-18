@@ -59,7 +59,16 @@
       class="bg-gray-900 text-green-400 p-5 h-87.5 rounded-xl overflow-y-auto font-mono text-sm shadow-inner tracking-wide"
     >
       @for (log of consoleLogs(); track $index) {
-        <p class="my-1 opacity-90">> {{ log }}</p>
+        <p
+          class="my-1 opacity-90"
+          [class]="{
+            'text-red-400': log.status === 'error',
+            'text-orange-400': log.status === 'loading',
+            'text-green-400': log.status === 'success',
+          }"
+        >
+          > {{ log.message }}
+        </p>
       }
     </div>
 
