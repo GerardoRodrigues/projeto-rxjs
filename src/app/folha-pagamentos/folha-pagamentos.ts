@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { IFuncionario, IPagamentoResponse, PagamentosApi } from './services/pagamentos-api';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { catchError, concatMap, EMPTY, finalize, from, of, tap } from 'rxjs';
+import { catchError, concatMap, EMPTY, finalize, from, of, retry, tap, timer } from 'rxjs';
 
 export interface IMessageLogs {
   message: string;
@@ -91,6 +91,16 @@ export class FolhaPagamentos {
           this.addLog({ message: `Pagando ${funcionario.nome}`, status: 'loading' });
 
           return this._pagamentosApi.pagarFuncionario(funcionario).pipe(
+            retry({
+              count: 2,
+              delay: (erro, tentativas) => {
+                this.addLog({
+                  message: `Falha no pagamento para ${funcionario.nome}. Tentativa ${tentativas} de 2.`,
+                  status: 'loading',
+                });
+                return timer(1000);
+              },
+            }),
             tap(() => {
               this.atualizarStatus(funcionario.id, 'pago');
               this.addLog({
